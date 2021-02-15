@@ -127,6 +127,7 @@
             _updateAttributes(widgetOptions);
             _restoreSpecialJs(widgetOptions);
             _fixFormValidaton(widgetOptions);
+         
             $elem.closest('.' + widgetOptions.widgetContainer).triggerHandler(events.afterInsert, $newclone);
         } else {
             // trigger a custom event for hooking
@@ -192,9 +193,16 @@
         var widgetOptions = eval($elem.closest('div[data-dynamicform]').attr('data-dynamicform'));
         var id            = $elem.attr('id');
         var newID         = id;
-
+        
         if (id !== undefined) {
+            
             var matches = id.match(regexID);
+            //in case of element is s2 having those id then change regex
+            if(id.startsWith('s2-togall') || id.startsWith('parent-s2-togall'))
+            { 
+                matches=id.match(/^(.+?)([-\d-]{3,})(.+)$/i);
+            }
+           
             if (matches && matches.length === 4) {
                 matches[2] = matches[2].substring(1, matches[2].length - 1);
                 var identifiers = matches[2].split('-');
@@ -213,15 +221,22 @@
                         }
                     }
                 }
-
+                
+            
                 newID = matches[1] + '-' + identifiers.join('-') + '-' + matches[3];
+               //add the s2-togall in the select2 elemnent
+                if(id.startsWith('parent-s2-togall')){
+                    var s2togallID=id.replace("parent-","");
+                    $("#"+id).html('<span id="'+s2togallID+'" class="s2-togall-button s2-togall-select"><span class="s2-select-label"><i class="far fa-square"></i>Select all</span><span class="s2-unselect-label"><i class="far fa-check-square"></i>Unselect all</span></span>');
+                }
+               
                 $elem.attr('id', newID);
             } else {
                 newID = id + index;
                 $elem.attr('id', newID);
             }
         }
-
+       
         if (id !== newID) {
             $elem.closest(widgetOptions.widgetItem).find('.field-' + id).each(function() {
                 $(this).removeClass('field-' + id).addClass('field-' + newID);
@@ -442,8 +457,10 @@
         var $hasSelect2 = $(widgetOptionsRoot.widgetItem).find('[data-krajee-select2]');
         if ($hasSelect2.length > 0) {
             $hasSelect2.each(function() {
+                
                 var id = $(this).attr('id');
                 var configSelect2 = eval($(this).attr('data-krajee-select2'));
+                var configSelect2Options = ($(this).attr('data-s2-options'));
 
                 if ($(this).data('select2')) {
                     $(this).select2('destroy');
@@ -457,13 +474,17 @@
                     _restoreKrajeeDepdrop($(this));
                 }
 
-                $.when($('#' + id).select2(configSelect2)).done(initS2Loading(id, '.select2-container--krajee'));
-
+                var s2LoadingFunc = typeof initSelect2Loading != 'undefined' ? initSelect2Loading : initS2Loading;
+                var s2OpenFunc = typeof initSelect2DropStyle != 'undefined' ? initSelect2DropStyle : initS2Change;
+               
+                $.when($('#' + id).select2(configSelect2)).done(s2LoadingFunc(id, configSelect2Options));
+                // set the select all & unselect all option
+                $("#"+id).trigger('change');
                 var kvClose = 'kv_close_' + id.replace(/\-/g, '_');
 
-                $('#' + id).on('select2:opening', function(ev) {
-                    initSelect2DropStyle(id, kvClose, ev);
-                });
+                // $('#' + id).on('select2:opening', function(ev) {
+                //     s2OpenFunc(id, kvClose, ev);
+                // });
 
                 $('#' + id).on('select2:unselect', function() {
                     window[kvClose] = true;
