@@ -169,7 +169,9 @@
             });
         }
     };
-
+    function isPromise(promise) {  
+        return !!promise && typeof promise.then === 'function'
+    }
     var _deleteItem = function(widgetOptions, e, $elem) {
         var count = _count($elem, widgetOptions);
 
@@ -178,7 +180,18 @@
 
             // trigger a custom event for hooking
             var eventResult = $('.' + widgetOptions.widgetContainer).triggerHandler(events.beforeDelete, $todelete);
-            if (eventResult !== false) {
+            if(isPromise(eventResult)){
+                eventResult.then(()=>{
+                    _removeValidations($todelete, widgetOptions, count);
+                    $todelete.remove();
+                    _updateAttributes(widgetOptions);
+                    _restoreSpecialJs(widgetOptions);
+                    _fixFormValidaton(widgetOptions);
+                    $('.' + widgetOptions.widgetContainer).triggerHandler(events.afterDelete);
+                }).catch(err=>{
+                    
+                });
+            }else if (eventResult !== false) {
                 _removeValidations($todelete, widgetOptions, count);
                 $todelete.remove();
                 _updateAttributes(widgetOptions);
