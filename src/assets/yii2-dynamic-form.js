@@ -251,11 +251,13 @@
         }
        
         if (id !== newID) {
-            $elem.closest(widgetOptions.widgetItem).find('.field-' + id).each(function() {
-                $(this).removeClass('field-' + id).addClass('field-' + newID);
-            });
-            // update "for" attribute
-            $elem.closest(widgetOptions.widgetItem).find("label[for='" + id + "']").attr('for',newID); 
+            if(widgetOptions){
+                $elem.closest(widgetOptions.widgetItem).find('.field-' + id).each(function() {
+                    $(this).removeClass('field-' + id).addClass('field-' + newID);
+                });
+                // update "for" attribute
+                $elem.closest(widgetOptions.widgetItem).find("label[for='" + id + "']").attr('for',newID); 
+            }    
         }
 
         return newID;
